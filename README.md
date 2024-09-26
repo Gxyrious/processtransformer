@@ -1,7 +1,9 @@
 ## ProcessTransformer: Predictive Business Process Monitoring with Transformer Network
 
 ![header image](https://github.com/Zaharah/processtransformer/blob/main/pt.JPG)
-
+[![Downloads](https://static.pepy.tech/badge/processtransformer)](https://pepy.tech/project/processtransformer)
+[![Downloads](https://static.pepy.tech/badge/processtransformer/month)](https://pepy.tech/project/processtransformer)
+[![Downloads](https://static.pepy.tech/badge/processtransformer/week)](https://pepy.tech/project/processtransformer)
 <details><summary>Abstract (click to expand)</summary>
 <p>
 
