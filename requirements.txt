@@ -1,0 +1,6 @@
+tensorflow==2.17.*
+tf-keras
+numpy
+pandas
+scikit-learn
+pm4py

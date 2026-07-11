@@ -34,8 +34,11 @@ class LogsDataProcessor:
         df["concept:name"] = df["concept:name"].str.lower()
         df["concept:name"] = df["concept:name"].str.replace(" ", "-")
         df["time:timestamp"] = df["time:timestamp"].str.replace("/", "-")
-        df["time:timestamp"]= pd.to_datetime(df["time:timestamp"],  
-            dayfirst=True).map(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
+        # pandas >=2.0 严格解析；用 format="mixed" + utc 同时兼容
+        # helpdesk 的 "YYYY-MM-DD HH:MM:SS.fff" 与 XES 的 ISO8601 带时区格式
+        df["time:timestamp"] = pd.to_datetime(df["time:timestamp"],
+            format="mixed", utc=True).dt.tz_localize(None).map(
+            lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
         if sort_temporally:
             df.sort_values(by = ["time:timestamp"], inplace = True)
         return df
@@ -63,7 +66,7 @@ class LogsDataProcessor:
         for _, case in enumerate(unique_cases):
             act = df[df[case_id] == case][case_name].to_list()
             for i in range(len(act) - 1):
-                prefix = np.where(i == 0, act[0], " ".join(act[:i+1]))        
+                prefix = act[0] if i == 0 else " ".join(act[:i+1])
                 next_act = act[i+1]
                 processed_df.at[idx, "case_id"]  =  case
                 processed_df.at[idx, "prefix"]  =  prefix
@@ -73,9 +76,7 @@ class LogsDataProcessor:
         return processed_df
 
     def _process_next_activity(self, df, train_list, test_list):
-        df_split = np.array_split(df, self._pool)
-        with Pool(processes=self._pool) as pool:
-            processed_df = pd.concat(pool.imap_unordered(self._next_activity_helper_func, df_split))
+        processed_df = self._run_pool(self._next_activity_helper_func, df)
         train_df = processed_df[processed_df["case_id"].isin(train_list)]
         test_df = processed_df[processed_df["case_id"].isin(test_list)]
         train_df.to_csv(f"{self._dir_path}/{Task.NEXT_ACTIVITY.value}_train.csv", index = False)
@@ -97,15 +98,15 @@ class LogsDataProcessor:
             recent_diff = datetime.timedelta()
             next_time =  datetime.timedelta()
             for i in range(0, len(act)):
-                prefix = np.where(i == 0, act[0], " ".join(act[:i+1]))
+                prefix = act[0] if i == 0 else " ".join(act[:i+1])
                 if i > 0:
                     latest_diff = datetime.datetime.strptime(time[i], "%Y-%m-%d %H:%M:%S") - \
                                         datetime.datetime.strptime(time[i-1], "%Y-%m-%d %H:%M:%S")
                 if i > 1:
                     recent_diff = datetime.datetime.strptime(time[i], "%Y-%m-%d %H:%M:%S")- \
                                     datetime.datetime.strptime(time[i-2], "%Y-%m-%d %H:%M:%S")
-                latest_time = np.where(i == 0, 0, latest_diff.days)
-                recent_time = np.where(i <=1, 0, recent_diff.days)
+                latest_time = 0 if i == 0 else latest_diff.days
+                recent_time = 0 if i <= 1 else recent_diff.days
                 time_passed = time_passed + latest_time
                 if i+1 < len(time):
                     next_time = datetime.datetime.strptime(time[i+1], "%Y-%m-%d %H:%M:%S") - \
@@ -126,9 +127,7 @@ class LogsDataProcessor:
         return processed_df_time
 
     def _process_next_time(self, df, train_list, test_list):
-        df_split = np.array_split(df, self._pool)
-        with Pool(processes=self._pool) as pool:
-            processed_df = pd.concat(pool.imap_unordered(self._next_time_helper_func, df_split))
+        processed_df = self._run_pool(self._next_time_helper_func, df)
         train_df = processed_df[processed_df["case_id"].isin(train_list)]
         test_df = processed_df[processed_df["case_id"].isin(test_list)]
         train_df.to_csv(f"{self._dir_path}/{Task.NEXT_TIME.value}_train.csv", index = False)
@@ -149,7 +148,7 @@ class LogsDataProcessor:
             latest_diff = datetime.timedelta()
             recent_diff = datetime.timedelta()
             for i in range(0, len(act)):
-                prefix = np.where(i == 0, act[0], " ".join(act[:i+1]))
+                prefix = act[0] if i == 0 else " ".join(act[:i+1])
                 if i > 0:
                     latest_diff = datetime.datetime.strptime(time[i], "%Y-%m-%d %H:%M:%S") - \
                                         datetime.datetime.strptime(time[i-1], "%Y-%m-%d %H:%M:%S")
@@ -157,11 +156,11 @@ class LogsDataProcessor:
                     recent_diff = datetime.datetime.strptime(time[i], "%Y-%m-%d %H:%M:%S")- \
                                     datetime.datetime.strptime(time[i-2], "%Y-%m-%d %H:%M:%S")
 
-                latest_time = np.where(i == 0, 0, latest_diff.days)
-                recent_time = np.where(i <=1, 0, recent_diff.days)
+                latest_time = 0 if i == 0 else latest_diff.days
+                recent_time = 0 if i <= 1 else recent_diff.days
                 time_passed = time_passed + latest_time
 
-                time_stamp = str(np.where(i == 0, time[0], time[i]))
+                time_stamp = time[0] if i == 0 else time[i]
                 ttc = datetime.datetime.strptime(time[-1], "%Y-%m-%d %H:%M:%S") - \
                         datetime.datetime.strptime(time_stamp, "%Y-%m-%d %H:%M:%S")
                 ttc = str(ttc.days)  
@@ -179,9 +178,7 @@ class LogsDataProcessor:
         return processed_df_remaining_time
 
     def _process_remaining_time(self, df, train_list, test_list):
-        df_split = np.array_split(df, self._pool)
-        with Pool(processes=self._pool) as pool:
-            processed_df = pd.concat(pool.imap_unordered(self._remaining_time_helper_func, df_split))
+        processed_df = self._run_pool(self._remaining_time_helper_func, df)
         train_remaining_time = processed_df[processed_df["case_id"].isin(train_list)]
         test_remaining_time = processed_df[processed_df["case_id"].isin(test_list)]
         train_remaining_time.to_csv(f"{self._dir_path}/{Task.REMAINING_TIME.value}_train.csv", index = False)
@@ -203,3 +200,17 @@ class LogsDataProcessor:
             self._process_remaining_time(df, train_list, test_list)
         else:
             raise ValueError("Invalid task.")
+
+    def _run_pool(self, func, df):
+        """Run a helper over df, multiprocessing when pool>1, else sequential.
+
+        macOS Python 3.8+ defaults to 'spawn' start method; combined with
+        the heavy per-case loop in the helpers, pool=1 via Pool() is both
+        slow and error-prone (pickling whole objects, swallowed tracebacks).
+        For pool<=1 we just call the helper directly on the whole frame.
+        """
+        if self._pool and self._pool > 1:
+            df_split = np.array_split(df, self._pool)
+            with Pool(processes=self._pool) as pool:
+                return pd.concat(pool.imap_unordered(func, df_split))
+        return func(df)

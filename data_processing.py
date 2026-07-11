@@ -22,7 +22,7 @@ parser.add_argument("--dir_path",
 
 parser.add_argument("--raw_log_file", 
     type=str, 
-    default="./datasets/helpdesk/helpdesk.csv", 
+    default="./datasets/raw/helpdesk/finale.csv", 
     help="path to raw csv log file")
 
 parser.add_argument("--task", 
@@ -35,16 +35,30 @@ parser.add_argument("--sort_temporally",
     default=False, 
     help="sort cases by timestamp")
 
+parser.add_argument("--columns",
+    type=str,
+    default="helpdesk",
+    help="column preset: 'helpdesk' = [Case ID, Activity, Complete Timestamp]; "
+         "'xes' = [case:concept:name, concept:name, time:timestamp]; "
+         "or a comma-separated triplet 'case_col,activity_col,time_col'")
+
 args = parser.parse_args()
+
+if args.columns == "helpdesk":
+    _columns = ["Case ID", "Activity", "Complete Timestamp"]
+elif args.columns == "xes":
+    _columns = ["case:concept:name", "concept:name", "time:timestamp"]
+else:
+    _columns = [c.strip() for c in args.columns.split(",")]
+    assert len(_columns) == 3, "--columns needs exactly 3 values: case, activity, time"
 
 if __name__ == "__main__": 
     # Process raw logs
     start = time.time()
     data_processor = LogsDataProcessor(name=args.dataset, 
         filepath=args.raw_log_file, 
-        columns = ["Case ID", "Activity", "Complete Timestamp"], #["case:concept:name", "concept:name", "time:timestamp"], 
+        columns=_columns,
         dir_path=args.dir_path, pool = 1) #changed from 4 to 1
     data_processor.process_logs(task=args.task, sort_temporally= args.sort_temporally)
     end = time.time()
     print(f"Total processing time: {end - start}")
-

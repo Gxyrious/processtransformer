@@ -1,0 +1,32 @@
+# ──────────────────────────────────────────────
+# 运行流程生成的中间产物
+# (由 data_processing.py 重新生成，含 metadata.json 及 *_train/*_test.csv)
+datasets/*/processed/
+
+# 训练保存的模型权重 (checkpoint)
+models/
+
+# 评估输出的结果文件
+results/
+
+# ──────────────────────────────────────────────
+# Python / 虚拟环境 / 缓存
+.venv/
+venv/
+env/
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# ──────────────────────────────────────────────
+# 编辑器 / 操作系统
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
