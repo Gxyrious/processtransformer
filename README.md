@@ -34,6 +34,20 @@ python data_processing.py --dataset=helpdesk --task=next_activity
 python data_processing.py --dataset=helpdesk --task=next_time
 python data_processing.py --dataset=helpdesk --task=remaining_time
 ```
+
+使用 ChronoTrace 的增强数据集时，传入原始 CSV 和对应的 `new_dataset.json`：
+
+先在 `Accept_Course` 根目录的虚拟环境中注册本地 ChronoTrace 源码：
+
+```python
+python -m pip install -e 2026-06-20/ChronoTrace
+```
+
+```python
+python data_processing.py --dataset=helpdesk_augmented --task=next_activity --raw_log_file=./datasets/raw/helpdesk/finale.csv --new_dataset=../../2026-06-20/ChronoTrace/outputs/ProcessTransformer/helpdesk/<run_id>/new_dataset.json
+python data_processing.py --dataset=helpdesk_augmented --task=next_time --raw_log_file=./datasets/raw/helpdesk/finale.csv --new_dataset=../../2026-06-20/ChronoTrace/outputs/ProcessTransformer/helpdesk/<run_id>/new_dataset.json
+python data_processing.py --dataset=helpdesk_augmented --task=remaining_time --raw_log_file=./datasets/raw/helpdesk/finale.csv --new_dataset=../../2026-06-20/ChronoTrace/outputs/ProcessTransformer/helpdesk/<run_id>/new_dataset.json
+```
 训练并评估模型请运行:
 
 ```python

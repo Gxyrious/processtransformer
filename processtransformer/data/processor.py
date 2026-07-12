@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import json
 import pandas as pd
@@ -5,10 +7,15 @@ import numpy as np
 import datetime
 from multiprocessing import  Pool
 
+from chronotrace import TraceDataset
+
 from ..constants import Task
 
 class LogsDataProcessor:
-    def __init__(self, name, filepath, columns, dir_path = "./datasets/processed", pool = 1):
+    def __init__(
+        self, name, filepath, columns, dir_path="./datasets/processed",
+        pool=1, trace_dataset: TraceDataset | None = None,
+    ):
         """Provides support for processing raw logs.
         Args:
             name: str: Dataset name
@@ -25,9 +32,25 @@ class LogsDataProcessor:
             os.makedirs(f"{dir_path}/{self._name}/processed")
         self._dir_path = f"{self._dir_path}/{self._name}/processed"
         self._pool = pool
+        self._trace_dataset = trace_dataset
 
     def _load_df(self, sort_temporally = False):
-        df = pd.read_csv(self._filepath)
+        if self._trace_dataset is None:
+            df = pd.read_csv(self._filepath)
+        else:
+            df = pd.DataFrame(
+                [
+                    {
+                        "Case ID": trace.trace_id,
+                        "Activity": event.meta["activity"],
+                        "Resource": event.meta.get("resource", ""),
+                        "Complete Timestamp": event.timestamp,
+                    }
+                    for trace in self._trace_dataset.traces
+                    for event in trace.events
+                ],
+                columns=["Case ID", "Activity", "Resource", "Complete Timestamp"],
+            )
         df = df[self._org_columns]
         df.columns = ["case:concept:name", 
             "concept:name", "time:timestamp"]

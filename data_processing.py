@@ -4,6 +4,7 @@ import time
 import numpy as np
 import pandas as pd
 
+from chronotrace.adapters import ProcessTransformerCSVAdapter
 from processtransformer import constants
 from processtransformer.data.processor import LogsDataProcessor
 
@@ -24,6 +25,11 @@ parser.add_argument("--raw_log_file",
     type=str, 
     default="./datasets/raw/helpdesk/finale.csv", 
     help="path to raw csv log file")
+
+parser.add_argument("--new_dataset",
+    type=str,
+    default=None,
+    help="path to ChronoTrace new_dataset.json")
 
 parser.add_argument("--task", 
     type=constants.Task, 
@@ -52,13 +58,18 @@ else:
     _columns = [c.strip() for c in args.columns.split(",")]
     assert len(_columns) == 3, "--columns needs exactly 3 values: case, activity, time"
 
+trace_dataset = None
+if args.new_dataset:
+    trace_dataset = ProcessTransformerCSVAdapter(args.raw_log_file).load_new_dataset(args.new_dataset)
+
 if __name__ == "__main__": 
     # Process raw logs
     start = time.time()
     data_processor = LogsDataProcessor(name=args.dataset, 
         filepath=args.raw_log_file, 
         columns=_columns,
-        dir_path=args.dir_path, pool = 1) #changed from 4 to 1
+        dir_path=args.dir_path, pool=1,
+        trace_dataset=trace_dataset)
     data_processor.process_logs(task=args.task, sort_temporally= args.sort_temporally)
     end = time.time()
     print(f"Total processing time: {end - start}")
