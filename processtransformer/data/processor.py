@@ -37,23 +37,21 @@ class LogsDataProcessor:
     def _load_df(self, sort_temporally = False):
         if self._trace_dataset is None:
             df = pd.read_csv(self._filepath)
+            df = df[self._org_columns]
+            df.columns = ["case:concept:name", "concept:name", "time:timestamp"]
         else:
             df = pd.DataFrame(
                 [
                     {
-                        "Case ID": trace.trace_id,
-                        "Activity": event.meta["activity"],
-                        "Resource": event.meta.get("resource", ""),
-                        "Complete Timestamp": event.timestamp,
+                        "case:concept:name": trace.trace_id,
+                        "concept:name": event.meta["activity"],
+                        "time:timestamp": event.timestamp,
                     }
                     for trace in self._trace_dataset.traces
                     for event in trace.events
                 ],
-                columns=["Case ID", "Activity", "Resource", "Complete Timestamp"],
+                columns=["case:concept:name", "concept:name", "time:timestamp"],
             )
-        df = df[self._org_columns]
-        df.columns = ["case:concept:name", 
-            "concept:name", "time:timestamp"]
         df["concept:name"] = df["concept:name"].str.lower()
         df["concept:name"] = df["concept:name"].str.replace(" ", "-")
         df["time:timestamp"] = df["time:timestamp"].str.replace("/", "-")
