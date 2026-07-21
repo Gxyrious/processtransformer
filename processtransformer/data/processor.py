@@ -207,12 +207,17 @@ class LogsDataProcessor:
 
     def process_logs(self, task, 
         sort_temporally = False, 
-        train_test_ratio = 0.80):
+        train_test_ratio = 0.80,
+        train_cases = None, test_cases = None):
         df = self._load_df(sort_temporally)
         self._extract_logs_metadata(df)
-        train_test_ratio = int(abs(df["case:concept:name"].nunique()*train_test_ratio))
-        train_list = df["case:concept:name"].unique()[:train_test_ratio]
-        test_list = df["case:concept:name"].unique()[train_test_ratio:]
+        if train_cases is not None and test_cases is not None:
+            train_list = list(train_cases)
+            test_list = list(test_cases)
+        else:
+            train_test_ratio = int(abs(df["case:concept:name"].nunique()*train_test_ratio))
+            train_list = df["case:concept:name"].unique()[:train_test_ratio]
+            test_list = df["case:concept:name"].unique()[train_test_ratio:]
         if task == Task.NEXT_ACTIVITY:
             self._process_next_activity(df, train_list, test_list)
         elif task == Task.NEXT_TIME:
