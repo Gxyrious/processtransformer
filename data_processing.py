@@ -73,8 +73,9 @@ test_cases = None
 if args.train_log_file and args.test_log_file:
     train_adapter = EventLogCSVAdapter(args.train_log_file)
     train_ds = (train_adapter.load_new_dataset(args.new_dataset)
-                if args.new_dataset else train_adapter.load(args.dataset))
-    test_ds = EventLogCSVAdapter(args.test_log_file).load(args.dataset)
+                if args.new_dataset else train_adapter.load(train_adapter.csv_path.parent.name))
+    test_adapter = EventLogCSVAdapter(args.test_log_file)
+    test_ds = test_adapter.load(test_adapter.csv_path.parent.name)
     trace_dataset = TraceDataset(
         dataset_name=train_ds.dataset_name, workload_id=train_ds.workload_id,
         workload_description=train_ds.workload_description,

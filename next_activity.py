@@ -25,11 +25,11 @@ parser.add_argument("--result_dir", default="./results", type=str, help="results
 parser.add_argument("--task", type=constants.Task, 
     default=constants.Task.NEXT_ACTIVITY,  help="task name")
 
-parser.add_argument("--epochs", default=10, type=int, help="number of total epochs")
+parser.add_argument("--epochs", default=100, type=int, help="number of total epochs")
 
 parser.add_argument("--batch_size", default=12, type=int, help="batch size")
 
-parser.add_argument("--learning_rate", default=0.001, type=float,
+parser.add_argument("--learning_rate", default=0.01, type=float,
                     help="learning rate")
 
 parser.add_argument("--gpu", default=0, type=int, 
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     model_path = f"{args.model_dir}/{args.dataset}"
     if not os.path.exists(model_path):
         os.makedirs(model_path)
-    model_path = f"{model_path}/next_activity_ckpt"
+    model_path = f"{model_path}/next_activity_ckpt.weights.h5"
 
     result_path = f"{args.result_dir}/{args.dataset}"
     if not os.path.exists(result_path):
